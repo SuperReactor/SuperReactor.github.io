@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Windows 2000 VM</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
+        #screen_container { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        canvas { width: 100% !important; height: auto !important; image-rendering: pixelated; }
+    </style>
+</head>
+<body>
+    <div id="screen_container">
+        <canvas style="display: none"></canvas>
+    </div>
+    <script src="libv86.js"></script>
+    <script>
+        window.onload = function() {
+            var emulator = new V86Starter({
+                wasm_path: "v86.wasm",
+                memory_size: 256 * 1024 * 1024,
+                screen_container: document.getElementById("screen_container"),
+                bios: { url: "seabios.bin" },   // Updated to match your screenshot
+                vga_bios: { url: "vgabios.bin" }, // Updated to match your screenshot
+                hda: { url: "win2k.img" },
+                cdrom: { url: "your_exe.iso" }, // <--- Make sure your ISO is in the folder!
+                initial_state: { url: "v86state.bin" }, // Matches your screenshot
+                autostart: true,
+            });
+        };
+    </script>
+</body>
+</html>
