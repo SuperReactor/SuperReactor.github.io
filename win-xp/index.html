@@ -33,8 +33,7 @@
             try {
                 // List every suffix that exists in your folder:
                 const win2kSuffixes = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah'];
-                const stateSuffixes = ['aa', 'ab', 'ac', 'ad', 'ae', 'af'];
-
+                const stateSuffixes = ['aa', 'ab', 'ac', 'ad', 'ae'];
                 const win2kBlob = await fetchAndMerge('win2k_part_', win2kSuffixes);
                 const stateBlob = await fetchAndMerge('state_part_', stateSuffixes);
 
