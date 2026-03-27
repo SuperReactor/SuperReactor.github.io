@@ -1,31 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Windows 2000 VM</title>
+    <title>Win2K Horror VM</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
-        #screen_container { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body, html { margin: 0; padding: 0; height: 100%; background: #000; color: #0f0; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+        #screen_container { width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #status { margin-bottom: 20px; font-size: 1.2em; text-align: center; text-shadow: 0 0 5px #0f0; }
         canvas { width: 100% !important; height: auto !important; image-rendering: pixelated; }
     </style>
 </head>
 <body>
     <div id="screen_container">
+        <div id="status">BOOTING SYSTEM...<br>DOWNLOADING DATA CHUNKS</div>
         <canvas style="display: none"></canvas>
     </div>
+
     <script src="libv86.js"></script>
     <script>
-        window.onload = function() {
-            var emulator = new V86Starter({
-                wasm_path: "v86.wasm",
-                memory_size: 256 * 1024 * 1024,
-                screen_container: document.getElementById("screen_container"),
-                bios: { url: "seabios.bin" },   // Updated to match your screenshot
-                vga_bios: { url: "vgabios.bin" }, // Updated to match your screenshot
-                hda: { url: "win2k.img" },
-                cdrom: { url: "your_exe.iso" }, // <--- Make sure your ISO is in the folder!
-                initial_state: { url: "v86state.bin" }, // Matches your screenshot
-                autostart: true,
-            });
+        async function fetchAndMerge(prefix, suffixes) {
+            const blobs = [];
+            for (let s of suffixes) {
+                const fileName = prefix + s;
+                document.getElementById("status").innerHTML = `LOADING COMPONENT: ${fileName}...`;
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error(`Failed to load ${fileName}`);
+                blobs.push(await response.blob());
+            }
+            return new Blob(blobs);
+        }
+
+        window.onload = async function() {
+            try {
+                // List every suffix that exists in your folder:
+                const win2kSuffixes = ['aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah'];
+                const stateSuffixes = ['aa', 'ab', 'ac', 'ad', 'ae', 'af'];
+
+                const win2kBlob = await fetchAndMerge('win2k_part_', win2kSuffixes);
+                const stateBlob = await fetchAndMerge('state_part_', stateSuffixes);
+
+                const emulator = new V86Starter({
+                    wasm_path: "v86.wasm",
+                    memory_size: 256 * 1024 * 1024,
+                    screen_container: document.getElementById("screen_container"),
+                    bios: { url: "seabios.bin" },
+                    vga_bios: { url: "vgabios.bin" },
+                    hda: { buffer: await win2kBlob.arrayBuffer() },
+                    initial_state: { buffer: await stateBlob.arrayBuffer() },
+                    // MAKE SURE THIS MATCHES YOUR ISO FILENAME EXACTLY:
+                    cdrom: { url: "WinXP.Horror.Peacful.iso" }, 
+                    autostart: true,
+                });
+
+                emulator.add_listener("emulator-started", () => {
+                    document.getElementById("status").style.display = "none";
+                });
+
+            } catch (e) {
+                document.getElementById("status").style.color = "red";
+                document.getElementById("status").innerText = "CRITICAL BOOT ERROR: " + e.message;
+            }
         };
     </script>
 </body>
